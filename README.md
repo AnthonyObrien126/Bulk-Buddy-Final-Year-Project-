@@ -1,4 +1,4 @@
-MTG Bulk Buddy
+# MTG Bulk Buddy
 
 MTG Bulk Buddy is a full-stack web application built to help Magic: The Gathering (MTG) players efficiently manage their card collections and decks. Designed with casual and competitive players in mind, the platform offers powerful tools for organizing, searching, building, and analyzing physical card collections.
 
@@ -21,7 +21,7 @@ Magic: The Gathering players often rely on spreadsheets or incomplete tools for 
 
      Responsive UI built with Tailwind CSS and Angular
 
-Tech Stack
+## Tech Stack
 Layer	Technology
 Frontend	Angular, Tailwind CSS
 Backend	Node.js, Express.js
@@ -49,7 +49,7 @@ Key Features
     Data Export
     Export your collections and decklists as .txt or .csv for backup or third-party use.
 
-Repository Structure
+## Repository Structure
 
 /backend
   /routes
@@ -67,7 +67,7 @@ Repository Structure
       pages/
       services/
       
-Academic Context
+## Academic Context
 
 This project was submitted as part of the COM668 Computing Project module at Ulster University. It demonstrates real-world application of:
 
