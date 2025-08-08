@@ -1,0 +1,53 @@
+<div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-800 to-indigo-900 text-white dark:text-white p-6">
+  <h1 class="text-5xl font-bold mb-4 drop-shadow-lg">Welcome to <span class="text-yellow-300">Bulk Buddy</span></h1>
+  <p class="text-lg mb-8 text-center max-w-xl">
+    A smart way to manage your Magic: The Gathering card collection and decks. Track what you own, what you need, and build like a pro.
+  </p>
+
+  <div class="flex flex-wrap gap-4 justify-center">
+    <!-- Show Login Button if not logged in -->
+    <a
+    *ngIf="!authService.isLoggedIn()"
+    routerLink="/login"
+    class="bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 hover:shadow-xl"
+    >
+    Get Started / Login
+    </a>
+
+    <!-- Show Fun Button if logged in -->
+    <button
+    *ngIf="authService.isLoggedIn()"
+    (click)="showRandomMessage()"
+    class="bg-yellow-300 text-black px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 hover:shadow-xl"
+    >
+    Feeling Lucky?
+    </button>
+
+    <!-- Display Random Message -->
+    <p *ngIf="randomMessage" class="mt-4 text-center text-sm text-gray-300 animate-bounce">
+      {{ randomMessage }}
+    </p>
+
+    <a routerLink="/cards"
+    class="bg-white text-indigo-900 px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 hover:shadow-xl"
+    >
+      Browse Cards
+    </a>
+
+
+    <a
+      routerLink="/my-collection"
+      class="bg-white text-indigo-900 px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 hover:shadow-xl"
+    >
+      My Collection
+    </a>
+
+    <a
+      routerLink="/my-decks"
+      class="bg-white text-indigo-900 px-6 py-3 rounded-xl font-semibold transition transform hover:scale-105 hover:shadow-xl"
+    >
+      My Decks
+    </a>
+  </div>
+</div>
+<router-outlet></router-outlet>

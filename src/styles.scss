@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+      @apply bg-white text-black dark:bg-gray-900 dark:text-white;
+    }
+  }
+  
+@layer components {
+    .btn-nav {
+      @apply inline-block bg-white text-gray-900 font-semibold py-2 px-4 rounded shadow hover:bg-yellow-300 hover:text-black transition text-center;
+    }
+  }
+  
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

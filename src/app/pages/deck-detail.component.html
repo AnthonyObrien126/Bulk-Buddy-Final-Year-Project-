@@ -1,0 +1,185 @@
+<div class="p-4" *ngIf="!loading && deck">
+
+    <!-- Back Button -->
+    <button 
+      class="mb-4 bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600"
+      (click)="location.back()"
+    >
+      ← Back to My Decks
+    </button>
+  
+    <!-- Deck Title -->
+    <div *ngIf="!editMode">
+        <h1 class="text-4xl font-bold mb-2">{{ deck.name }}</h1>
+        <p class="text-gray-400 mb-1">Format: {{ deck.format }}</p>
+        <p class="text-gray-400 mb-4">{{ deck.description }}</p>
+    </div>
+    <hr class="my-4 border-gray-600">
+
+    <!-- Deck Edit Form -->
+    <div *ngIf="editMode" class="space-y-2 mb-2">
+        <input [(ngModel)]="deck.name" 
+            class="bg-gray-700 text-white p-2 rounded w-full" 
+            placeholder="Deck Name">
+    
+        <input [(ngModel)]="deck.format" 
+            class="bg-gray-700 text-white p-2 rounded w-full" 
+            placeholder="Format">
+    
+        <textarea [(ngModel)]="deck.description" 
+                class="bg-gray-700 text-white p-2 rounded w-full" 
+                placeholder="Description"></textarea>
+    
+        <button (click)="saveDeckChanges()" 
+                class="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-400 mr-2">
+        Save Changes
+        </button>
+  </div>
+
+    <!-- Add Card -->
+    <button *ngIf="editMode"
+    class="mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 mr-2"
+    (click)="showAddCardForm = true">
+    + Add Card
+    </button>
+
+
+    <!-- Edit Cards -->
+    <button (click)="toggleEditMode()" 
+        class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400 mr-2">
+        {{ editMode ? 'Done Editing' : 'Edit Deck' }}
+    </button>
+
+      
+    <div *ngIf="editMode">
+        <div *ngIf="showAddCardForm" class="mb-8 p-4 border border-gray-700 rounded">
+            <h3 class="text-xl font-semibold mb-2">Add Card</h3>
+
+            <!-- Search Input -->
+            <input 
+                type="text" 
+                [(ngModel)]="searchQuery"
+                (input)="searchCards()"
+                class="w-full p-2 mb-2 rounded text-black" 
+                placeholder="Search Card Name">
+
+            <!-- Search Results -->
+            <ul *ngIf="searchResults.length > 0" class="mb-2">
+                <li 
+                    *ngFor="let card of searchResults"
+                    (click)="selectCard(card)" 
+                    class="cursor-pointer">
+                    {{ card.name }}
+                </li>
+
+            </ul>
+
+            <!-- Quantity Input -->
+            <input 
+                type="number" 
+                [(ngModel)]="newCardQuantity"
+                class="w-full p-2 mb-2 rounded text-black" 
+                placeholder="Quantity">
+
+            <!-- Buttons -->
+            <div class="space-x-2">
+                <button 
+                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500"
+                (click)="addCardToDeck()">
+                Add
+                </button>
+
+                <button 
+                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500"
+                (click)="showAddCardForm = false">
+                Cancel
+                </button>
+            </div>  
+        </div>
+    </div>
+
+    
+    <!-- Grouped Main Deck Cards -->
+    <div *ngFor="let group of groupedCards | keyvalue" class="mb-8">
+        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-600 pb-1">
+            {{ group.key }} ({{ getTotalCards(asArray(group.value)) }})
+          </h2>
+          
+           
+
+        <ul class="space-y-1">
+        <li *ngFor="let c of asArray(group.value)" class="flex items-center justify-between relative group">
+
+            <span class="relative">
+                <ng-container *ngIf="editMode; else viewMode">
+                    <input type="number"
+                        [(ngModel)]="c.quantity"
+                        min="1"
+                        class="w-14 px-1 rounded text-black mr-2" />
+                </ng-container>
+
+                <ng-template #viewMode>
+                    {{ c.quantity }}x
+                </ng-template>
+
+                <a [routerLink]="['/cards', c.card_id._id]"
+                    class="text-blue-400 underline cursor-pointer"
+                    (mouseenter)="hoveredCardId = c.card_id._id; hoveredImage = c.card_id.image_url || c.card_id.image_uris?.normal 
+                            || generateScryfallImage(c.card_id.scryfall_id); logCardId(c)" 
+                    (mouseleave)="hoveredCardId = null; hoveredImage = null">
+                        {{ c.card_id.name }}
+                </a>
+
+            </span>
+
+            <!-- Only show image for hovered card -->
+                <img *ngIf="hoveredCardId === c.card_id._id" 
+                    [src]="hoveredImage" 
+                    class="absolute z-10 w-64 h-auto border border-gray-700 rounded shadow-lg top-5 left-0" />
+
+            <div class="flex items-center space-x-2">
+            <span *ngIf="!c.owned" class="text-red-500 font-semibold">Missing</span>
+
+            <button *ngIf="editMode" 
+                    class="bg-red-500 text-white px-2 py-1 rounded"
+                    (click)="deleteCardFromDeck(c)">
+                Delete
+            </button>
+            </div>
+
+        </li>                            
+        </ul>
+    </div>  
+
+    <!-- Deck Stats Widget -->
+    <app-deck-stats [deck]="deck"></app-deck-stats>
+    
+    <!-- Sideboard -->
+    <div *ngIf="(deck.format === 'Standard' || deck.format === 'Modern') && deck.sideboard.length > 0">
+        <h2 class="text-2xl font-semibold mb-2 border-b border-gray-600 pb-1">
+          Sideboard ({{ deck.sideboard_cards }})
+        </h2>
+        <div *ngFor="let group of groupedSideboard | keyvalue" class="mb-8">
+            <h3 class="text-xl font-medium mb-2">
+              {{ group.key }} ({{ asArray(group.value).length }})
+            </h3>
+            <ul class="space-y-1">
+              <li *ngFor="let c of asArray(group.value)" class="flex items-center justify-between">
+                <span>
+                  {{ c.quantity }}x {{ c.card_id.name }}
+                </span>
+                <span *ngIf="!c.owned" class="text-red-500 font-semibold">Missing</span>
+              </li>
+            </ul>
+          
+        </div>         
+    </div>
+      
+  
+    <!-- Warnings -->
+    <div *ngIf="deck.warnings.length > 0">
+      <h2 class="text-2xl font-semibold mb-2 text-red-400">Warnings</h2>
+      <ul class="list-disc list-inside">
+        <li *ngFor="let w of deck.warnings" class="text-red-400">{{ w }}</li>
+      </ul>
+    </div>

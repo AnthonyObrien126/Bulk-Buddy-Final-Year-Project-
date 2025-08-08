@@ -1,0 +1,35 @@
+<nav class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow px-6 py-3 flex items-center justify-between">
+  <div class="text-xl font-bold text-yellow-400">
+    <a routerLink="/">Bulk Buddy</a>
+  </div>
+
+  <ul class="flex gap-6 text-sm font-semibold items-center">
+    <li>
+      <a routerLink="/" routerLinkActive="text-yellow-300" [routerLinkActiveOptions]="{ exact: true }" class="hover:text-yellow-300">
+        Home
+      </a>
+    </li>
+
+    <ng-container *ngIf="authService.isLoggedIn$ | async; else loggedOutLinks">
+      <li>
+        <a (click)="logout()" class="hover:text-yellow-300 cursor-pointer">
+          Logout
+        </a>
+      </li>
+    </ng-container>
+
+    <ng-template #loggedOutLinks>
+      <li>
+        <a routerLink="/login" routerLinkActive="text-yellow-300" class="hover:text-yellow-300">
+          Login
+        </a>
+      </li>
+    </ng-template>
+
+    <li><a routerLink="/cards" routerLinkActive="text-yellow-300" class="hover:text-yellow-300">Browse Cards</a></li>
+    <li><a routerLink="/my-collection" routerLinkActive="text-yellow-300" class="hover:text-yellow-300">My Collection</a></li>
+    <li><a routerLink="/my-decks" routerLinkActive="text-yellow-300" class="hover:text-yellow-300">My Decks</a></li>
+
+    <li><app-dark-toggle></app-dark-toggle></li>
+  </ul>
+</nav>

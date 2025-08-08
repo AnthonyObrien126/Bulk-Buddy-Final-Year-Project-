@@ -1,0 +1,53 @@
+<div class="bg-gray-800 text-white p-4 rounded-lg shadow mb-8">
+  <h2 class="text-xl font-bold mb-4">Deck Stats</h2>
+
+  <p>Total Cards: {{ deck.total_cards }}</p>
+  <p>Owned: {{ deck.cards_owned }}</p>
+  <p>Missing: {{ deck.cards_missing }}</p>
+  <p>Estimated Value: ${{ estimatedValue.toFixed(2) }}</p>
+
+  <div *ngIf="deck.ownership_complete" class="text-green-400 mt-2">
+    ✔️ You own every card in this deck!
+  </div>
+
+  <div *ngIf="!deck.ownership_complete" class="text-red-400 mt-2">
+    ⚠️ You are missing some cards.
+  </div>
+
+  <hr class="my-4 border-gray-600">
+
+  <!-- Mana Curve Chart -->
+  <h3 class="text-lg font-semibold mb-2">Mana Curve</h3>
+  <div class="bg-gray-900 p-4 rounded shadow w-full max-w-xl mx-auto mb-8">
+    <canvas
+      baseChart
+      [datasets]="manaCurveDatasets"
+      [labels]="manaCurveLabels"
+      [options]="{ responsive: true }"
+      [type]="'bar'">
+    </canvas>
+    </div>
+
+
+  <!-- Colour Breakdown Chart -->
+  <h3 class="text-lg font-semibold mb-2">Colour Breakdown</h3>
+  <div class="bg-gray-900 p-4 rounded shadow w-full max-w-xl mx-auto">
+    <canvas 
+      baseChart
+      [datasets]="colorPieDatasets"
+      [labels]="colorPieLabels"
+      [options]="{ responsive: true }"
+      [type]="'pie'">
+    </canvas>
+  </div>
+
+
+
+  <!-- Rarity Breakdown Text -->
+  <h3 class="text-lg font-semibold mb-2">Rarity Breakdown</h3>
+  <ul>
+    <li *ngFor="let rarity of rarityCounts | keyvalue">
+      {{ ('' + rarity.key) | titlecase }}: {{ rarity.value }}
+    </li>    
+  </ul>
+</div>

@@ -1,0 +1,49 @@
+
+<div class="px-4 sm:px-6 lg:px-8">
+  <h1 class="text-2xl font-bold mb-4">My Decks</h1>
+
+    <button (click)="showForm = true" class="bg-green-500 text-white px-4 py-2 rounded mb-4">
+      + Create Deck
+    </button>
+
+    <app-deck-form *ngIf="showForm" (deckCreated)="loadDecks()" (closed)="showForm = false"></app-deck-form>
+
+    <!-- Deck Grid Layout -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div *ngFor="let deck of decks" class="border border-gray-700 bg-gray-900 p-4 rounded-lg shadow-md hover:shadow-lg transition">
+
+        <h2 class="text-xl font-semibold  text-white mb-1">{{ deck.name }}</h2>
+        <p class="text-gray-400 text-sm mb-1">Format: {{ deck.format }}</p>
+        <p class="text-gray-400 text-sm mb-2">Cards in deck: {{ getDeckCardCount(deck) }}</p>
+
+        <img 
+          [src]="deck.custom_image_url || 'assets/default-deck.jpg'" 
+          alt="Deck Image" 
+          class="w-full h-40 object-cover mb-2 rounded border border-gray-700"
+        />
+
+        <input 
+          [(ngModel)]="deck.custom_image_url" 
+          placeholder="Paste Image URL..." 
+          class="border border-gray-700 bg-gray-800 text-white p-2 w-full mb-2 rounded focus:ring-2 focus:ring-blue-500"
+        />
+
+        <button 
+          (click)="updateDeckImage(deck)" 
+          class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded mb-2 w-full transition">
+          Save Image
+        </button>
+
+        <div class="flex justify-between">
+          <a [routerLink]="['/my-decks', deck._id]" class="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded transition">
+            View
+          </a>
+
+          <button (click)="deleteDeck(deck._id)" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded transition">
+            Delete
+          </button>
+        </div>
+
+      </div>
+    </div>
+</div>

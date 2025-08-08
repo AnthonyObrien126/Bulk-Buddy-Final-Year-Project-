@@ -1,0 +1,138 @@
+<h2 class="text-3xl font-bold text-center mb-6 text-gray-800 dark:text-white">Card Browser</h2>
+
+<!-- Top bar with filters and Scryfall search -->
+<div class="flex flex-col lg:flex-row justify-between gap-6 mb-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+
+  <!-- Filters -->
+  <form (ngSubmit)="applyFilters()" class="flex flex-wrap gap-4 items-end">
+    <input
+      type="text"
+      [(ngModel)]="filters.name"
+      name="name"
+      placeholder="Search cards..."
+      class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+    />
+
+    <select [(ngModel)]="filters.rarity" name="rarity" class="px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600">
+      <option value="">All Rarities</option>
+      <option value="common">Common</option>
+      <option value="uncommon">Uncommon</option>
+      <option value="rare">Rare</option>
+      <option value="mythic">Mythic</option>
+    </select>
+
+    <select [(ngModel)]="filters.type_line" name="type_line" class="px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600">
+      <option value="">All Types</option>
+      <option value="Creature">Creature</option>
+      <option value="Artifact">Artifact</option>
+      <option value="Enchantment">Enchantment</option>
+      <option value="Instant">Instant</option>
+      <option value="Sorcery">Sorcery</option>
+      <option value="Land">Land</option>
+    </select>
+
+    <!-- Color Filters -->
+    <div class="flex gap-2 items-center flex-wrap">
+      <label *ngFor="let color of availableColors" class="text-sm text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [value]="color.code"
+          #cb
+          [checked]="filters.colors.includes(color.code)"
+          (change)="toggleColor(color.code, cb.checked)"
+          class="mr-1"
+        />
+        {{ color.label }}
+      </label>
+    </div>
+
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">
+      Filter
+    </button>
+  </form>
+
+  <!-- Scryfall Add Card -->
+  <div class="flex flex-col gap-4 w-full lg:w-1/3">
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [(ngModel)]="scryfallName"
+        placeholder="Search Scryfall by name..."
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600"
+      />
+      <button (click)="searchScryfallCard()" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition">
+        Search
+      </button>
+    </div>
+
+    <div *ngIf="scryfallError" class="text-red-500 text-sm">{{ scryfallError }}</div>
+
+    <div *ngIf="scryfallResult" class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md flex flex-col items-center">
+      <img [src]="scryfallResult.image_uris?.normal" [alt]="scryfallResult.name" class="mb-2 rounded shadow" />
+      <p class="font-bold">{{ scryfallResult.name }}</p>
+      <p class="text-sm mb-2">{{ scryfallResult.type_line }}</p>
+      <button (click)="importCard(scryfallResult.id)" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+        Add to Collection
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center text-gray-500 dark:text-gray-300">Loading cards...</div>
+
+<!-- No Results -->
+<div *ngIf="!loading && cards.length === 0" class="text-center text-gray-500 dark:text-gray-300">No cards found.</div>
+
+<!-- Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" *ngIf="!loading && cards.length > 0" [@cardFade]>
+  <a
+    *ngFor="let card of cards"
+    [routerLink]="['/cards', card._id]"
+    class="block transform transition hover:scale-105"
+  >
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 hover:shadow-xl">
+      <img [src]="card.image_url" [alt]="card.name" class="w-full h-auto mb-3 rounded" />
+      <h4 class="text-lg font-semibold text-gray-800 dark:text-white">{{ card.name }}</h4>
+      <p class="text-sm text-gray-600 dark:text-gray-300">{{ card.type_line }}</p>
+      <p
+        class="text-sm font-bold capitalize"
+        [ngClass]="{
+          'text-gray-500 dark:text-gray-400': card.rarity === 'common',
+          'text-blue-600 dark:text-blue-300': card.rarity === 'uncommon',
+          'text-yellow-600 dark:text-yellow-300': card.rarity === 'rare',
+          'text-red-600 dark:text-red-400': card.rarity === 'mythic'
+        }"
+      >
+        {{ card.rarity }}
+      </p>
+    </div>
+  </a>
+</div>
+
+
+<!-- Scroll to top -->
+<div class="flex justify-center my-6">
+  <button class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition" (click)="scrollToTop()">
+    ↑ Scroll to Top
+  </button>
+</div>
+
+<!-- Pagination -->
+<div class="flex justify-center items-center gap-4 mt-8" *ngIf="totalPages > 1">
+  <button
+    (click)="prevPage()"
+    [disabled]="page === 1"
+    class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
+  >
+    Prev
+  </button>
+  <span class="text-gray-800 dark:text-white">Page {{ page }} of {{ totalPages }}</span>
+  <button
+    (click)="nextPage()"
+    [disabled]="page === totalPages"
+    class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
+  >
+    Next
+  </button>
+</div>

@@ -1,0 +1,380 @@
+<div *ngIf="userId; else notLoggedIn">
+  
+<div class="p-4">
+  <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+    My Collection
+  </h2>
+
+  <div *ngIf="errorMessage" class="text-red-500 mb-4">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="collection.length === 0 && !errorMessage" class="text-gray-400">
+    You don’t have any cards in your collection yet.
+  </div>
+  
+  <!-- Filters -->
+  <form (ngSubmit)="applyFilters()" class="flex flex-wrap gap-4 items-end">
+    <input
+      type="text"
+      [(ngModel)]="filters.name"
+      name="name"
+      placeholder="Search cards..."
+      class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-400 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+    />
+
+    <select [(ngModel)]="filters.rarity" name="rarity" class="px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600">
+      <option value="">All Rarities</option>
+      <option value="common">Common</option>
+      <option value="uncommon">Uncommon</option>
+      <option value="rare">Rare</option>
+      <option value="mythic">Mythic</option>
+    </select>
+
+    <select [(ngModel)]="filters.type_line" name="type_line" class="px-4 py-2 border rounded-md dark:bg-gray-700 dark:text-white dark:border-gray-600">
+      <option value="">All Types</option>
+      <option value="Creature">Creature</option>
+      <option value="Artifact">Artifact</option>
+      <option value="Enchantment">Enchantment</option>
+      <option value="Instant">Instant</option>
+      <option value="Sorcery">Sorcery</option>
+      <option value="Land">Land</option>
+    </select>
+
+    <!-- Color Filters -->
+    <div class="flex gap-2 items-center flex-wrap">
+      <label *ngFor="let color of availableColors" class="text-sm text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [value]="color.code"
+          #cb
+          [checked]="filters.colors.includes(color.code)"
+          (change)="toggleColor(color.code, cb.checked)"
+          class="mr-1"
+        />
+        {{ color.label }}
+      </label>
+    </div>
+
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">
+      Filter
+    </button>
+  </form>
+
+  <!-- Search bar -->
+  <div class="mb-4">
+    <label class="text-sm font-medium text-gray-900 dark:text-white block mb-1">
+      Card Name:
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="searchName"
+      placeholder="Llanowar Elves"
+      class="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    />
+  </div>
+  
+  
+  <div class="mb-4">
+    <label class="text-sm font-medium text-gray-900 dark:text-white block mb-1">
+      Set Code:
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="searchSet"
+      placeholder="DOM (Dominaria)"
+      class="w-full p-2 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    />
+  </div>
+  
+  
+  <button (click)="onSearchExact()" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+    Search Exact Version
+  </button>
+  <div *ngIf="scryfallError" class="text-red-500 text-sm mt-2">
+    {{ scryfallError }}
+  </div>
+     
+
+  <!-- Add-to-collection form -->
+  <div *ngIf="selectedCard" class="bg-gray-800 p-4 rounded-xl mb-8">
+    <h3 class="text-white text-lg font-semibold mb-2">Add to Collection</h3>
+    <div class="flex flex-col gap-3">
+      <div class="text-white">{{ selectedCard.name }} ({{ selectedCard.set_name }})</div>
+  
+      <label class="text-white text-sm">
+        Quantity:
+        <input type="number" [(ngModel)]="newEntry.quantity" class="ml-2 p-1 rounded bg-gray-700 text-white w-20" />
+      </label>
+  
+      <label class="text-white text-sm">
+        Notes:
+        <input type="text" [(ngModel)]="newEntry.notes" placeholder="e.g. Foil edition"
+          class="ml-2 p-1 rounded bg-gray-700 text-white w-full" />
+      </label>
+  
+      <label class="text-white text-sm">
+        Acquired Date:
+        <input type="date" [(ngModel)]="newEntry.acquired_date" class="ml-2 p-1 rounded bg-gray-700 text-white" />
+      </label>
+  
+      <button (click)="addToCollection()" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-1 px-4 rounded w-max">
+        Add to Collection
+      </button>
+    </div>
+  </div> 
+
+  <!-- If no local results but found on Scryfall -->
+  <div *ngIf="!searchResults.length && scryfallResult" class="bg-gray-900 rounded-xl p-4 text-white">
+    <h4 class="text-lg font-semibold mb-2">Card not found locally</h4>
+    <p class="text-sm mb-2">You can import it from Scryfall:</p>
+
+    <img [src]="scryfallResult.image_uris.normal" [alt]="scryfallResult.name" class="w-40 rounded shadow mb-2" />
+
+    <div class="font-semibold">{{ scryfallResult.name }}</div>
+    <div class="text-sm text-gray-400 mb-3">{{ scryfallResult.set_name }} · {{ scryfallResult.rarity | titlecase }}</div>
+
+    <button
+      (click)="importCard(scryfallResult.id)"
+      class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-4 rounded"
+    >
+      Import to Database
+    </button>
+  </div>
+ 
+  
+  <!-- Show search results -->
+  <div *ngIf="searchResults.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+    <div
+      *ngFor="let card of searchResults"
+      class="bg-gray-900 rounded-xl overflow-hidden shadow-md hover:ring-2 hover:ring-yellow-500 cursor-pointer"
+      (click)="selectCard(card)"
+    >
+      <img [src]="card.image_url" [alt]="card.name" class="w-full" />
+      <div class="p-2 text-sm text-white">
+        <div class="font-semibold">{{ card.name }}</div>
+        <div class="text-xs text-gray-400">{{ card.set_name }} · {{ card.rarity | titlecase }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle (Grid / List) -->
+  <div class="flex justify-end gap-2 mb-4">
+    <button
+      class="px-3 py-1 rounded text-sm"
+      [class.bg-indigo-600]="viewMode === 'grid'"
+      (click)="viewMode = 'grid'"
+    >
+      Grid View
+    </button>
+    <button
+      class="px-3 py-1 rounded text-sm"
+      [class.bg-indigo-600]="viewMode === 'list'"
+      (click)="viewMode = 'list'"
+    >
+      List View
+    </button>
+  </div>
+  
+  <!-- Grid View -->
+<div
+*ngIf="viewMode === 'grid'"
+class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+>
+<a
+  *ngFor="let entry of collection"
+  [routerLink]="['/cards', entry.card_id._id]"
+  class="bg-gray-800 rounded-xl overflow-hidden shadow hover:scale-105 transition-transform duration-200 block"
+>
+  <img
+    [src]="entry.card_id.image_url"
+    [alt]="entry.card_id.name"
+    class="w-full h-auto"
+  />
+  <div class="p-3 text-sm text-white">
+    <div class="font-semibold text-base">{{ entry.card_id.name }}</div>
+    <div class="text-gray-400 text-xs">
+      {{ entry.card_id.set_name }} ·
+      {{ entry.card_id.rarity | titlecase }}
+    </div>
+    <div class="text-gray-300 text-xs mt-1">
+      Quantity: {{ entry.quantity }}
+    </div>
+  </div>
+</a>
+</div>
+
+  <!-- List View -->
+  <table *ngIf="viewMode === 'list'" class="w-full text-sm text-gray-900 dark:text-white">
+    <thead class="text-left border-b border-gray-300 dark:border-gray-700">
+      <tr>
+        <th class="py-2 px-4">Name</th>
+        <th class="py-2 px-4">Set</th>
+        <th class="py-2 px-4">Rarity</th>
+        <th class="py-2 px-4">Quantity</th>
+        <th class="py-2 px-4">Notes</th>
+        <th class="py-2 px-4">Actions</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr *ngFor="let entry of collection" class="border-b border-gray-300 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <td class="py-2 px-4">
+          <a [routerLink]="['/cards', entry.card_id._id]" class="hover:underline text-indigo-600 dark:text-indigo-400">
+            {{ entry.card_id.name }}
+          </a>
+        </td>
+        <td class="py-2 px-4">{{ entry.card_id.set_name }}</td>
+        <td class="py-2 px-4 font-semibold capitalize"
+            [ngClass]="{
+              'text-gray-500 dark:text-gray-400': entry.card_id.rarity === 'common',
+              'text-blue-600 dark:text-blue-300': entry.card_id.rarity === 'uncommon',
+              'text-yellow-600 dark:text-yellow-300': entry.card_id.rarity === 'rare',
+              'text-red-600 dark:text-red-400': entry.card_id.rarity === 'mythic'
+            }">
+          {{ entry.card_id.rarity | titlecase }}
+        </td>
+
+    
+        <!-- Quantity: Inline editable -->
+        <td class="py-2 px-4">
+          <ng-container *ngIf="!entry.isEditing; else editQty">
+            {{ entry.quantity }}
+          </ng-container>
+          <ng-template #editQty>
+            <input type="number" [(ngModel)]="entry.editValues.quantity" class="w-16 rounded px-1 text-black" />
+          </ng-template>
+        </td>
+    
+        <!-- Notes: Inline editable -->
+        <td class="py-2 px-4 italic">
+          <ng-container *ngIf="!entry.isEditing; else editNotes">
+            {{ entry.notes || '—' }}
+          </ng-container>
+          <ng-template #editNotes>
+            <input type="text" [(ngModel)]="entry.editValues.notes" class="w-full rounded px-1 text-black" />
+          </ng-template>
+        </td>
+    
+        <!-- Action buttons -->
+        <td class="py-2 px-4 space-x-2">
+          <button *ngIf="!entry.isEditing" (click)="entry.isEditing = true" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+            Edit
+          </button>
+          <button *ngIf="entry.isEditing" (click)="saveEntryChanges(entry)" class="text-green-600 dark:text-green-400 hover:underline">
+            Save
+          </button>
+          <button *ngIf="entry.isEditing" (click)="cancelEdit(entry)" class="text-red-600 dark:text-red-400 hover:underline">
+            Cancel
+          </button>
+          <button *ngIf="entry.isEditing" (click)="deleteEntry(entry)" class="text-red-700 dark:text-red-500 hover:underline">
+            Delete
+          </button>
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 📊 Collection Stats Widget -->
+<div class="bg-gray-900 p-4 rounded-xl text-white mb-6 shadow relative min-h-[250px]">
+  <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+    <i class="fa-solid fa-chart-column"></i> Collection Stats
+  </h2>
+
+  <!-- Value Section -->
+  <div class="mb-4">
+    <p class="font-semibold text-sm mb-1">💰 Collection Value:</p>
+    <div class="ml-2 text-sm space-y-1">
+      <p>Non-Foil: ${{ collectionStats.valueUSD.toFixed(2) }}</p>
+      <p>Foil: ${{ collectionStats.valueUSDFoil.toFixed(2) }}</p>
+      <p class="font-semibold">Total: ${{ (collectionStats.valueUSD + collectionStats.valueUSDFoil).toFixed(2) }}</p>
+    </div>
+  </div>
+
+  <!-- Totals Section -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-4">
+    <div><span class="font-semibold">Total Cards:</span> {{ collectionStats.totalQuantity }}</div>
+    <div><span class="font-semibold">Unique Cards:</span> {{ collectionStats.uniqueCount }}</div>
+  </div>
+
+  <!-- Color Breakdown -->
+  <div class="mb-4">
+    <p class="font-semibold text-sm mb-1">🎨 Color Breakdown:</p>
+    <div class="flex flex-wrap gap-4 ml-2 text-sm">
+      <div *ngFor="let color of colorKeys" class="flex items-center gap-1">
+        <span class="font-mono">{{ color }}</span> 
+        <span>{{ collectionStats.colorCounts[color] }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rarity Breakdown -->
+  <div>
+    <p class="font-semibold text-sm mb-1">⭐ Rarity Breakdown:</p>
+    <div class="flex flex-wrap gap-4 ml-2 text-sm">
+      <div *ngFor="let rarity of ['common', 'uncommon', 'rare', 'mythic']" class="flex items-center gap-1">
+        <span>{{ rarity | titlecase }}:</span>
+        <span>{{ collectionStats.rarityCounts[rarity] || 0 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Button -->
+  <div class="absolute bottom-4 right-4">
+    <button
+      (click)="exportCollection()" 
+      class="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150">
+      <i class="fa-solid fa-download mr-2"></i> Export to .txt
+    </button>
+  </div>
+  
+</div>
+
+
+
+<!-- Scroll to top -->
+<div class="flex justify-center my-6">
+  <button class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition" (click)="scrollToTop()">
+    ↑ Scroll to Top
+  </button>
+</div>
+
+<!-- Pagination -->
+<div class="flex justify-center items-center gap-4 mt-8" *ngIf="totalPages > 1">
+  <button
+    (click)="prevPage()"
+    [disabled]="page === 1"
+    class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
+  >
+    Prev
+  </button>
+  <span class="text-gray-800 dark:text-white">Page {{ page }} of {{ totalPages }}</span>
+  <button
+    (click)="nextPage()"
+    [disabled]="page === totalPages"
+    class="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded hover:bg-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
+  >
+    Next
+  </button>
+</div>
+
+</div>
+
+<!-- Not Logged In -->
+<ng-template #notLoggedIn>
+  <div class="flex justify-center items-center min-h-[50vh]">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+      <i class="fas fa-lock text-4xl text-gray-400 mb-4"></i>
+      <h2 class="text-2xl font-bold text-gray-200 mb-4">
+        Please log in to access your collection
+      </h2>
+      <a routerLink="/login"
+         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition">
+        Go to Login Page
+      </a>
+    </div>
+  </div>
+</ng-template>
+

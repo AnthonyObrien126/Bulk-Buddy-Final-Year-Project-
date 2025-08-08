@@ -1,0 +1,26 @@
+<div class="bg-gray-900 p-6 rounded-lg shadow-lg max-w-md mx-auto">
+    <h2 class="text-2xl font-bold mb-4 rounded text-white">Create Deck</h2>
+  
+    <form (ngSubmit)="createDeck()" #deckForm="ngForm">
+  
+      <label class="block mb-2 text-sm font-medium text-white">Deck Name</label>
+      <input type="text" class="w-full p-2 mb-4 rounded text-black" [(ngModel)]="name" name="name" required>
+  
+      <label class="block mb-2 text-sm font-medium text-white">Description</label>
+      <textarea class="w-full p-2 mb-4 rounded text-black" [(ngModel)]="description" name="description"></textarea>
+  
+      <label class="block mb-2 text-sm font-medium text-white">Format</label>
+      <select class="w-full p-2 mb-4 rounded text-black" [(ngModel)]="format" name="format" required>
+        <option value="Commander">Commander</option>
+        <option value="Standard">Standard</option>
+        <option value="Modern">Modern</option>
+        <option value="Casual">Casual</option>
+      </select>
+  
+      <div class="flex justify-end space-x-2">
+        <button type="button" (click)="close()" class="px-4 py-2 bg-gray-700 text-white rounded">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded" [disabled]="deckForm.invalid">Create</button>
+      </div>
+    </form>
+  </div>
+  
